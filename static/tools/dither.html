@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low-Tech Image Dithering</title>
+    <style>
+        :root {
+            --bg-color: #f3f6f9;
+            --surface-color: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+            --border: #dee2e6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .header {
+            max-width: 1000px;
+            margin: 0 auto 2rem auto;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .controls {
+            max-width: 1000px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        input[type="file"], select {
+            background-color: var(--surface-color);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .btn-download {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-left: auto;
+        }
+
+        .btn-download:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .btn-download:disabled { background-color: var(--text-muted); opacity: 0.5; cursor: not-allowed; }
+
+        .workspace {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .canvas-title {
+            margin-bottom: 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            background-color: #f8f9fa;
+            border: 1px dashed var(--border);
+            image-rendering: pixelated;
+        }
+
+        .image-stats {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-color);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .workspace { grid-template-columns: 1fr; }
+            .btn-download { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Low-Tech Image Dithering</h1>
+        <p style="color: var(--text-muted); margin: 0;">Clone dari algoritma hitherdither (Ordered Bayer 8x8) dengan variasi palet multi-warna.</p>
+    </div>
+
+    <div class="controls">
+        <label>
+            1. Pilih Gambar
+            <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/webp">
+        </label>
+
+        <label>
+            2. Kategori Palet (6-Warna)
+            <select id="categorySelect">
+                <!-- Palet Original -->
+                <option value="grayscale">Grayscale</option>
+                <option value="low-tech">Low-Tech (Biru)</option>
+                <option value="obsolete">Obsolete (Hijau)</option>
+                <option value="high-tech">High-Tech (Merah)</option>
+                
+                <!-- Palet Tambahan Baru -->
+                <option value="orange">Orange</option>
+                <option value="ungu">Ungu</option>
+                <option value="navi">Navi (Navy Blue)</option>
+                <option value="pink">Pink</option>
+            </select>
+        </label>
+
+        <button id="btnDownload" class="btn-download" disabled>📥 Download Hasil</button>
+    </div>
+
+    <div class="workspace">
+        <div class="canvas-wrapper">
+            <div class="canvas-title">Gambar Asli (Grayscale)</div>
+            <canvas id="canvasOriginal"></canvas>
+            <div class="image-stats" id="statsOriginal">Menunggu gambar...</div>
+        </div>
+        <div class="canvas-wrapper">
+            <div class="canvas-title">Hasil Dithering Bayer 8x8</div>
+            <canvas id="canvasResult"></canvas>
+            <div class="image-stats" id="statsResult">Menunggu gambar...</div>
+        </div>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const categorySelect = document.getElementById('categorySelect');
+        const btnDownload = document.getElementById('btnDownload');
+        
+        const canvasOrig = document.getElementById('canvasOriginal');
+        const canvasRes = document.getElementById('canvasResult');
+        const ctxOrig = canvasOrig.getContext('2d');
+        const ctxRes = canvasRes.getContext('2d');
+        
+        const statsOriginal = document.getElementById('statsOriginal');
+        const statsResult = document.getElementById('statsResult');
+
+        let currentImage = null;
+        let originalFileName = "dithered";
+
+        // Konfigurasi Palet (Masing-masing 6 tingkatan warna, diurutkan dari gelap ke terang)
+        const palettes = {
+            // Palet Bawaan hitherdither
+            'grayscale': [[25,25,25], [75,75,75], [125,125,125], [175,175,175], [225,225,225], [250,250,250]],
+            'low-tech': [[11,21,71], [30,32,40], [57,77,174], [158,168,218], [187,196,230], [243,244,250]],
+            'obsolete': [[9,74,58], [58,136,118], [101,163,148], [144,189,179], [169,204,195], [242,247,246]],
+            'high-tech': [[86,9,6], [197,49,45], [228,130,124], [233,155,151], [242,193,190], [252,241,240]],
+            
+            // Palet Tambahan Baru
+            'orange': [[40,15,0], [100,40,0], [180,80,10], [240,120,30], [250,180,100], [255,230,200]],
+            'ungu': [[25,0,40], [60,10,90], [110,30,150], [160,80,210], [210,150,240], [245,220,255]],
+            'navi': [[5,10,30], [10,30,70], [20,60,120], [40,100,180], [100,160,220], [180,220,250]],
+            'pink': [[50,10,30], [120,20,70], [190,50,120], [240,100,170], [255,170,210], [255,220,240]]
+        };
+
+        // Matriks Bayer 8x8 (Terdiri dari angka 0 hingga 63)
+        const bayer8x8 = [
+             0, 32,  8, 40,  2, 34, 10, 42,
+            48, 16, 56, 24, 50, 18, 58, 26,
+            12, 44,  4, 36, 14, 46,  6, 38,
+            60, 28, 52, 20, 62, 30, 54, 22,
+             3, 35, 11, 43,  1, 33,  9, 41,
+            51, 19, 59, 27, 49, 17, 57, 25,
+            15, 47,  7, 39, 13, 45,  5, 37,
+            63, 31, 55, 23, 61, 29, 53, 21
+        ];
+
+        // Format Byte
+        const formatBytes = (bytes) => {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        };
+
+        const calculateDataUrlSize = (dataUrl) => (dataUrl.split(',')[1].length * 3) / 4;
+
+        // Events
+        imageUpload.addEventListener('change', handleImageUpload);
+        categorySelect.addEventListener('change', () => { if (currentImage) processImage(); });
+        
+        btnDownload.addEventListener('click', () => {
+            if (!currentImage) return;
+            const link = document.createElement('a');
+            link.download = `${originalFileName}_${categorySelect.value}.png`;
+            link.href = canvasRes.toDataURL('image/png');
+            link.click();
+        });
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            originalFileName = file.name.replace(/\.[^/.]+$/, "");
+            const fileSize = file.size;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Meniru logika img.thumbnail((800,800)) dari PIL Python
+                    const MAX_SIZE = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_SIZE || height > MAX_SIZE) {
+                        const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+
+                    canvasOrig.width = canvasRes.width = width;
+                    canvasOrig.height = canvasRes.height = height;
+
+                    ctxOrig.drawImage(img, 0, 0, width, height);
+                    currentImage = { width, height };
+                    
+                    statsOriginal.innerHTML = `<strong>Asli:</strong> ${img.width}×${img.height}px | ${formatBytes(fileSize)}`;
+                    btnDownload.disabled = false;
+                    processImage();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function processImage() {
+            const width = currentImage.width;
+            const height = currentImage.height;
+            const imgData = ctxOrig.getImageData(0, 0, width, height);
+            const dataOrig = imgData.data;
+
+            const grayBuffer = new Float32Array(width * height);
+            for (let i = 0; i < dataOrig.length; i += 4) {
+                // Konversi Grayscale (Luminance)
+                const gray = 0.299 * dataOrig[i] + 0.587 * dataOrig[i+1] + 0.114 * dataOrig[i+2];
+                grayBuffer[i / 4] = gray;
+                dataOrig[i] = dataOrig[i+1] = dataOrig[i+2] = gray;
+            }
+            ctxOrig.putImageData(imgData, 0, 0);
+
+            const resultImageData = new ImageData(width, height);
+            const resData = resultImageData.data;
+            const activePalette = palettes[categorySelect.value];
+            const numColors = activePalette.length;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx1D = y * width + x;
+                    const gray = grayBuffer[idx1D];
+
+                    // 1. Normalisasi nilai gray ke index palet
+                    const normalizedGray = (gray / 255) * (numColors - 1);
+
+                    // 2. Ambil nilai Bayer 8x8 dan ubah menjadi rentang -0.5 s/d +0.5
+                    const bayerValue = bayer8x8[(y % 8) * 8 + (x % 8)];
+                    const bayerOffset = (bayerValue / 64) - 0.5;
+
+                    // 3. Tambahkan offset dithering ke piksel
+                    let colorIndex = Math.round(normalizedGray + bayerOffset);
+                    
+                    // Batasi agar tidak melampaui array
+                    colorIndex = Math.max(0, Math.min(numColors - 1, colorIndex));
+
+                    // 4. Petakan ke warna di palet
+                    const finalColor = activePalette[colorIndex];
+                    const idx4D = idx1D * 4;
+
+                    resData[idx4D] = finalColor[0];     // R
+                    resData[idx4D+1] = finalColor[1];   // G
+                    resData[idx4D+2] = finalColor[2];   // B
+                    resData[idx4D+3] = 255;             // Alpha
+                }
+            }
+
+            ctxRes.putImageData(resultImageData, 0, 0);
+            
+            const resultEstimatedSize = calculateDataUrlSize(canvasRes.toDataURL('image/png'));
+            statsResult.innerHTML = `<strong>Hasil:</strong> ${width}×${height}px (Diresize otomatis) | Estimasi: ${formatBytes(resultEstimatedSize)} (PNG)`;
+        }
+    </script>
+</body>
+</html>
