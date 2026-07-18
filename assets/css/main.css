@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@source "hugo_stats.json";
+
+@import "chroma.css";
+
+@theme {
+  --font-main: "Segoe UI", Arial, sans-serif;
+  --font-mono: monospace;
+}
+
+@layer base {
+  h2 {
+    @apply text-2xl font-semibold mt-8 mb-4;
+  }
+
+  p {
+    @apply mb-4;
+  }
+
+  a {
+    @apply hover:text-gray-800;
+  }
+
+  ul,
+  ol {
+    @apply list-decimal pl-5 space-y-1;
+  }
+
+  table {
+    @apply min-w-full text-left text-sm font-light mb-6;
+  }
+
+  th {
+    @apply border-b font-medium p-4 bg-gray-50;
+  }
+
+  td {
+    @apply border-b p-4;
+  }
+}

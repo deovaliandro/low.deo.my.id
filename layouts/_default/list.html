@@ -1,0 +1,49 @@
+{{ define "main" }}
+
+<div class="mb-12">
+  <div class="">
+    {{ .Content }}
+    {{ if .Pages }}
+
+    <ol class="content-card-list">
+
+      {{ $pages := .RegularPages }}
+
+      {{ if eq .Section "blog" }}
+      {{ $pages = $pages.ByDate.Reverse }}
+      {{ else }}
+      {{ $pages = $pages.ByDate }}
+      {{ end }}
+
+      {{ range $pages }}
+
+      <li>
+        <a href="{{ .RelPermalink }}" class="content-card group">
+
+          <span class="content-card-title
+            text-slate-900 transition-colors group-hover:text-slate-600">
+            {{ .Title }}
+          </span>
+
+          <time datetime="{{ .Date.Format " 2006-01-02" }}" class="text-sm text-slate-500">
+            {{ .Date.Format (default "02 Jan 2006" .Site.Params.dateFormat) }}
+          </time>
+
+        </a>
+      </li>
+
+      {{ end }}
+
+    </ol>
+
+    {{ else }}
+
+    <p class="text-slate-500">
+      No posts yet.
+    </p>
+
+    {{ end }}
+  </div>
+</div>
+
+{{ end }}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ .Page.Title }}</title>
+  <link rel="icon" href="{{ "favicon.ico" | relURL }}" type="image/x-icon">
+  <link rel="shortcut icon" href="{{ "favicon.ico" | relURL }}" type="image/x-icon">
+  <link rel="apple-touch-icon" href="{{ "favicon.ico" | relURL }}">
+  <link rel="manifest" href="{{ "manifest.webmanifest" | relURL }}">
+  <meta name="theme-color" content="#fff5d1">
+  <meta name="description" content="{{ .Site.Params.description }}">
+  <meta name="author" content="{{ .Site.Params.author.name }}">
+  <meta name="keywords" content="{{ .Site.Params.keywords }}">
+  <meta name="robots" content="index, follow">
+  {{ with (templates.Defer (dict "key" "global")) }}
+  {{ partial "css.html" . }}
+  {{ end }}
+</head>
+
+<body class="bg-[#fff5d1] font-main text-2xl">
+  <header class="w-full pt-8 pb-4 px-6">
+    <div class="mx-auto">
+      <!-- Judul Utama -->
+      <h1 class="text-5xl md:text-6xl font-medium tracking-wide uppercase mb-1">
+        <a href="{{ .Site.BaseURL }}" class="">
+          {{ site.Params.author.name }}
+        </a>
+      </h1>
+
+      <!-- Tagline / Subtitle -->
+      <p class="text-sm md:text-base font-normal text-zinc-800 mb-4">
+        Tuhan bersama orang-orang santai
+      </p>
+
+      <!-- Menu Navigasi -->
+      <nav class="flex flex-wrap items-center gap-x-2">
+        <a href="/about" class="">about</a>
+        <span class="text-zinc-400">|</span>
+        <a href="/blog" class="">blog</a>
+        <span class="text-zinc-400">|</span>
+        <a href="#" class="">tags</a>
+      </nav>
+    </div>
+    <hr class="border-b border-black my-6">
+  </header>
+  <main class="max-w-4xl mx-auto pt-8 pb-4 px-6">
+    {{ block "main" . }}{{ end }}
+  </main>
+  <footer class="w-full mt-auto">
+    <div class="mx-auto px-6 py-6 text-center">
+      <hr class="border-b border-black my-6">
+      &copy; 2026 - Deo. 🌱 with ❤️‍🔥 from 🌏
+    </div>
+  </footer>
+  {{ partial "page-size.html" . }}
+</body>
+{{ if .Params.math }}
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{{ with resources.Get "js/mathjax.js" }}
+<script src="{{ .RelPermalink }}"></script>
+{{ end }}
+{{ end }}
+</html>
