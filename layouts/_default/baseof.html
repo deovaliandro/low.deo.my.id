@@ -19,41 +19,47 @@
   {{ end }}
 </head>
 
-<body class="bg-[#fff5d1] font-main text-2xl">
-  <header class="w-full pt-8 pb-4 px-6">
-    <div class="mx-auto">
-      <!-- Judul Utama -->
-      <h1 class="text-5xl md:text-6xl font-medium tracking-wide uppercase mb-1">
+<body class="bg-[#fff5d1] font-main text-lg md:text-2xl max-w-4xl mx-auto min-h-screen flex flex-col justify-between">
+  <!-- Header -->
+  <header class="pt-6 md:pt-8 pb-4 px-4 sm:px-6 w-full">
+    <div>
+      <!-- Judul Utama: Responsif dari HP (text-3xl) hingga Desktop (text-6xl) -->
+      <h1 class="text-3xl sm:text-4xl md:text-6xl font-medium tracking-wide uppercase mb-1 break-words">
         <a href="{{ .Site.BaseURL }}" class="">
           {{ site.Params.author.name }}
         </a>
       </h1>
 
       <!-- Tagline / Subtitle -->
-      <p class="text-sm md:text-base font-normal text-zinc-800 mb-4">
+      <p class="text-xs sm:text-sm md:text-base font-normal text-zinc-800 mb-4">
         Tuhan bersama orang-orang santai
       </p>
 
-      <!-- Menu Navigasi -->
-      <nav class="flex flex-wrap items-center gap-x-2">
-        <a href="/about" class="">about</a>
+      <!-- Menu Navigasi: Rapi di layar kecil dan besar -->
+      <nav class="flex flex-wrap items-center gap-x-2 text-base md:text-xl">
+        <a href="/about" class="hover:underline">about</a>
         <span class="text-zinc-400">|</span>
-        <a href="/blog" class="">blog</a>
+        <a href="/blog" class="hover:underline">blog</a>
         <span class="text-zinc-400">|</span>
-        <a href="#" class="">tags</a>
+        <a href="#" class="hover:underline">tags</a>
       </nav>
     </div>
-    <hr class="border-b border-black my-6">
+    <hr class="border-b border-black my-4 md:my-6">
   </header>
-  <main class="max-w-4xl mx-auto pt-8 pb-4 px-6">
+
+  <!-- Main Content -->
+  <main class="w-full pt-4 md:pt-8 pb-4 px-4 sm:px-6 grow">
     {{ block "main" . }}{{ end }}
   </main>
+
+  <!-- Footer -->
   <footer class="w-full mt-auto">
-    <div class="mx-auto px-6 py-6 text-center">
-      <hr class="border-b border-black my-6">
+    <div class="px-4 sm:px-6 py-4 md:py-6 text-center text-sm md:text-base">
+      <hr class="border-b border-black mb-4 md:mb-6">
       &copy; 2026 - Deo. 🌱 with ❤️‍🔥 from 🌏
     </div>
   </footer>
+
   {{ partial "page-size.html" . }}
 </body>
 {{ if .Params.math }}
