@@ -5,7 +5,7 @@
 @import "chroma.css";
 
 @theme {
-  --font-main: "Segoe UI", Arial, sans-serif;
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: monospace;
 }
 
